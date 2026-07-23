@@ -35,8 +35,8 @@ function convertToSQLite(sql) {
     .replace(/INT AUTO_INCREMENT PRIMARY KEY/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
     .replace(/INT PRIMARY KEY AUTO_INCREMENT/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT')
     .replace(/VARCHAR\(\d+\)/gi, 'TEXT')
-    .replace(/DATETIME DEFAULT CURRENT_TIMESTAMP/gi, 'TEXT DEFAULT CURRENT_TIMESTAMP')
-    .replace(/DATE/gi, 'TEXT');
+    .replace(/(?<![A-Za-z0-9_])DATETIME(?![A-Za-z0-9_])/gi, 'TEXT')
+    .replace(/(?<![A-Za-z0-9_])DATE(?![A-Za-z0-9_])/gi, 'TEXT');
 }
 
 class SQLitePool {
@@ -52,13 +52,39 @@ class SQLitePool {
     const dbExists = fs.existsSync(this.dbPath);
     this.db = new DatabaseSync(this.dbPath);
 
-    if (!dbExists || this.isEmpty()) {
+    if (!dbExists || this.isEmpty() || !this.hasExpectedSchema()) {
       console.log('[INVEX DB] Initializing local SQLite database (forensic_db.sqlite)...');
       try {
         const sqlContent = fs.readFileSync(this.schemaPath, 'utf8');
         const sqliteSql = convertToSQLite(sqlContent);
-        
+
         this.db.exec('PRAGMA foreign_keys = OFF;');
+        this.db.exec('DROP TABLE IF EXISTS Court_Report;');
+        this.db.exec('DROP TABLE IF EXISTS File_Attachment;');
+        this.db.exec('DROP TABLE IF EXISTS Evidence;');
+        this.db.exec('DROP TABLE IF EXISTS Postmortem_Exam;');
+        this.db.exec('DROP TABLE IF EXISTS Clinical_Exam;');
+        this.db.exec('DROP TABLE IF EXISTS Forensic_Case;');
+        this.db.exec('DROP TABLE IF EXISTS Patient;');
+        this.db.exec('DROP TABLE IF EXISTS Audit_Log;');
+        this.db.exec('DROP TABLE IF EXISTS User;');
+        this.db.exec('DROP TABLE IF EXISTS Report_Status;');
+        this.db.exec('DROP TABLE IF EXISTS File_Type;');
+        this.db.exec('DROP TABLE IF EXISTS Evidence_Status;');
+        this.db.exec('DROP TABLE IF EXISTS Storage_Location;');
+        this.db.exec('DROP TABLE IF EXISTS Evidence_Type;');
+        this.db.exec('DROP TABLE IF EXISTS Cause_Of_Death_Category;');
+        this.db.exec('DROP TABLE IF EXISTS Exam_Type;');
+        this.db.exec('DROP TABLE IF EXISTS Case_Status;');
+        this.db.exec('DROP TABLE IF EXISTS Case_Type;');
+        this.db.exec('DROP TABLE IF EXISTS Court;');
+        this.db.exec('DROP TABLE IF EXISTS Police_Station;');
+        this.db.exec('DROP TABLE IF EXISTS Blood_Group;');
+        this.db.exec('DROP TABLE IF EXISTS Marital_Status;');
+        this.db.exec('DROP TABLE IF EXISTS District;');
+        this.db.exec('DROP TABLE IF EXISTS Gender;');
+        this.db.exec('DROP TABLE IF EXISTS User_Role;');
+
         const statements = sqliteSql.split(';');
         for (let statement of statements) {
           const trimmed = statement.trim();
@@ -69,12 +95,20 @@ class SQLitePool {
         console.log('[INVEX DB] SQLite database initialized and seeded successfully.');
       } catch (err) {
         console.error('[INVEX DB] Failed to initialize SQLite database:', err.message);
-        // Clean up the file so it retries cleanly next time
         try {
           this.db.close();
           fs.unlinkSync(this.dbPath);
         } catch (e) {}
       }
+    }
+  }
+
+  hasExpectedSchema() {
+    try {
+      const columns = this.db.prepare("PRAGMA table_info(Forensic_Case)").all();
+      return columns.some(column => column.name === 'incident_date');
+    } catch {
+      return false;
     }
   }
 
