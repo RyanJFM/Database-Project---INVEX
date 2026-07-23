@@ -16,7 +16,7 @@ function Login({ onLoginSuccess }) {
     setLoading(true);
     setError(null);
 
-    axios.post('http://localhost:5000/api/auth/login', { username, password })
+    axios.post('/api/auth/login', { username, password })
       .then((res) => {
         setLoading(false);
         // Save session

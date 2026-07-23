@@ -27,7 +27,7 @@ function PatientList() {
 
   const fetchPatients = () => {
     setLoading(true);
-    axios.get('http://localhost:5000/api/patients')
+    axios.get('/api/patients')
       .then((response) => {
         setPatients(response.data);
         setLoading(false);
@@ -75,7 +75,7 @@ function PatientList() {
     setIsSubmitting(true);
     setFormSubmitError(null);
 
-    axios.post('http://localhost:5000/api/patients', formData)
+    axios.post('/api/patients', formData)
       .then(() => {
         setIsSubmitting(false);
         closeDrawer();

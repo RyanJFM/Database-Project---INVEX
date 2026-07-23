@@ -71,8 +71,8 @@ function CaseManagement() {
     setError(null);
     try {
       const [casesRes, patientsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/cases'),
-        axios.get('http://localhost:5000/api/patients')
+        axios.get('/api/cases'),
+        axios.get('/api/patients')
       ]);
       setCases(casesRes.data);
       setPatients(patientsRes.data);
@@ -136,7 +136,7 @@ function CaseManagement() {
   const fetchEvidenceForCase = (caseId) => {
     setEvidenceLoading(true);
     setEvidenceError(null);
-    axios.get(`http://localhost:5000/api/evidence/case/${caseId}`)
+    axios.get(`/api/evidence/case/${caseId}`)
       .then((res) => {
         setEvidenceList(res.data);
         setEvidenceLoading(false);
@@ -212,7 +212,7 @@ function CaseManagement() {
       user_id: '2'
     };
 
-    axios.post('http://localhost:5000/api/cases', submissionData)
+    axios.post('/api/cases', submissionData)
       .then(() => {
         setIsSubmitting(false);
         closeDrawer();
@@ -240,8 +240,8 @@ function CaseManagement() {
 
     const isClinical = examType === 'clinical';
     const endpoint = isClinical 
-      ? 'http://localhost:5000/api/exams/clinical' 
-      : 'http://localhost:5000/api/exams/postmortem';
+      ? '/api/exams/clinical' 
+      : '/api/exams/postmortem';
     
     const payload = isClinical 
       ? { case_id: selectedCaseForExam.case_id, ...clinicalData }
@@ -272,7 +272,7 @@ function CaseManagement() {
       ...evidenceFormData
     };
 
-    axios.post('http://localhost:5000/api/evidence', payload)
+    axios.post('/api/evidence', payload)
       .then(() => {
         setIsEvidenceSubmitting(false);
         // Clear description only, keep options selected
