@@ -18,7 +18,8 @@ const dbConfig = {
   connectionLimit: 10,
   queueLimit: 0,
   connectTimeout: 2000, // shorter timeout so fallback is quick
-  acquireTimeout: 2000
+  acquireTimeout: 2000,
+  multipleStatements: true
 };
 
 // SQLite dialect translation helper
@@ -68,6 +69,11 @@ class SQLitePool {
         console.log('[INVEX DB] SQLite database initialized and seeded successfully.');
       } catch (err) {
         console.error('[INVEX DB] Failed to initialize SQLite database:', err.message);
+        // Clean up the file so it retries cleanly next time
+        try {
+          this.db.close();
+          fs.unlinkSync(this.dbPath);
+        } catch (e) {}
       }
     }
   }
@@ -117,9 +123,24 @@ if (!hasMySQLConfig) {
   // Try connecting to MySQL
   pool = mysql.createPool(dbConfig);
   pool.getConnection()
-    .then((connection) => {
+    .then(async (connection) => {
       console.log('[INVEX DB] Successfully connected to MySQL database (forensic_db) pool.');
-      connection.release();
+      try {
+        // Verify if tables are initialized in MySQL
+        const [tables] = await connection.query('SHOW TABLES');
+        const hasUserTable = tables.some(t => Object.values(t)[0].toLowerCase() === 'user');
+        if (!hasUserTable) {
+          console.log('[INVEX DB] MySQL database is empty or missing tables. Initializing from database_setup.sql...');
+          const schemaPath = path.join(__dirname, '../database_setup.sql');
+          const sqlContent = fs.readFileSync(schemaPath, 'utf8');
+          await connection.query(sqlContent);
+          console.log('[INVEX DB] MySQL database initialized and seeded successfully.');
+        }
+      } catch (err) {
+        console.error('[INVEX DB] Failed to verify or auto-initialize MySQL database tables:', err.message);
+      } finally {
+        connection.release();
+      }
     })
     .catch((err) => {
       console.warn(`[INVEX DB] MySQL connection failed (${err.message}). Falling back to zero-setup SQLite database...`);
