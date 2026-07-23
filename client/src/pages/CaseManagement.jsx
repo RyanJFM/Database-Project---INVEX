@@ -100,7 +100,7 @@ function CaseManagement() {
     setIsDrawerOpen(true);
     setTimeout(() => {
       setIsDrawerVisible(true);
-    }, 10); // small delay to trigger CSS transition
+    }, 10);
   };
 
   const closeDrawer = () => {
@@ -108,12 +108,11 @@ function CaseManagement() {
     setTimeout(() => {
       setIsDrawerOpen(false);
       setFormSubmitError(null);
-    }, 300); // matching transition duration
+    }, 300);
   };
 
   const openExamDrawer = (c) => {
     setSelectedCaseForExam(c);
-    // Pre-select toggle based on the case type
     setExamType(c.case_type_id === 2 ? 'postmortem' : 'clinical');
     setIsExamDrawerOpen(true);
     setTimeout(() => {
@@ -127,7 +126,6 @@ function CaseManagement() {
       setIsExamDrawerOpen(false);
       setSelectedCaseForExam(null);
       setExamSubmitError(null);
-      // Reset forms
       setClinicalData({ exam_type_id: '1', injury_details: '' });
       setPostmortemData({ cod_category_id: '1', cause_of_death: '' });
     }, 300);
@@ -206,7 +204,6 @@ function CaseManagement() {
     setIsSubmitting(true);
     setFormSubmitError(null);
 
-    // Hardcode user_id to 2 as requested to represent the logged-in JMO
     const submissionData = {
       ...formData,
       user_id: '2'
@@ -216,13 +213,12 @@ function CaseManagement() {
       .then(() => {
         setIsSubmitting(false);
         closeDrawer();
-        // Reset inputs, keep current dropdown selections
         setFormData(prev => ({
           ...prev,
           incident_date: '',
           description: ''
         }));
-        fetchCasesAndPatients(); // Re-fetch the updated list
+        fetchCasesAndPatients();
       })
       .catch((err) => {
         console.error('Error creating case:', err);
@@ -251,7 +247,7 @@ function CaseManagement() {
       .then(() => {
         setIsExamSubmitting(false);
         closeExamDrawer();
-        fetchCasesAndPatients(); // Refresh list to register updates
+        fetchCasesAndPatients();
       })
       .catch((err) => {
         console.error('Error submitting exam details:', err);
@@ -275,12 +271,10 @@ function CaseManagement() {
     axios.post('/api/evidence', payload)
       .then(() => {
         setIsEvidenceSubmitting(false);
-        // Clear description only, keep options selected
         setEvidenceFormData(prev => ({
           ...prev,
           description: ''
         }));
-        // Re-fetch list
         fetchEvidenceForCase(selectedCaseForEvidence.case_id);
       })
       .catch((err) => {
@@ -301,16 +295,6 @@ function CaseManagement() {
     }
   };
 
-  const getStatusColor = (statusId) => {
-    switch (parseInt(statusId)) {
-      case 1: return '#a855f7'; // Logged: Purple
-      case 2: return '#ff9800'; // At Lab: Orange
-      case 3: return '#4caf50'; // Returned: Green
-      case 4: return '#ef4444'; // Disposed: Red
-      default: return '#6b7280';
-    }
-  };
-
   const generatePDF = (c) => {
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -320,14 +304,12 @@ function CaseManagement() {
 
     const patientObj = patients.find(p => p.patient_id === c.patient_id) || {};
 
-    const primaryColor = [168, 85, 247]; // Purple: #a855f7
+    const primaryColor = [79, 70, 229]; // Indigo: #4f46e5
     const darkColor = [17, 24, 39]; // Charcoal: #111827
 
-    // Top accent bar
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, 210, 8, 'F');
 
-    // Header Title
     doc.setTextColor(...darkColor);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
@@ -339,17 +321,14 @@ function CaseManagement() {
     doc.text('Office of the Judicial Medical Officer (JMO)', 20, 30);
     doc.text('Department of Forensic Medicine, Teaching Hospital', 20, 35);
 
-    // Separator line
     doc.setDrawColor(229, 231, 235);
     doc.line(20, 40, 190, 40);
 
-    // Report Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
     doc.setTextColor(...primaryColor);
     doc.text('OFFICIAL MEDICO-LEGAL COURT REPORT', 20, 50);
 
-    // Metadata Table
     const metaData = [
       ['Case ID', `#FC-${c.case_id}`, 'Linked Patient', patientObj.full_name || 'N/A'],
       ['Incident Date', formatDate(c.incident_date), 'Patient NIC', patientObj.nic || 'N/A'],
@@ -381,13 +360,11 @@ function CaseManagement() {
 
     const tableBottom = doc.lastAutoTable.finalY;
 
-    // incident details heading
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.setTextColor(...primaryColor);
     doc.text('Incident Details & Medical Observations', 20, tableBottom + 12);
 
-    // incident details body
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9.5);
     doc.setTextColor(...darkColor);
@@ -398,11 +375,9 @@ function CaseManagement() {
 
     const descBottom = tableBottom + 18 + (splitDesc.length * 5);
 
-    // divider
     doc.setDrawColor(229, 231, 235);
     doc.line(20, descBottom + 12, 190, descBottom + 12);
 
-    // Signatures / JMO Info
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(...darkColor);
@@ -412,14 +387,12 @@ function CaseManagement() {
     doc.text('Dr. C. Wickramasinghe (JMO)', 20, descBottom + 28);
     doc.text('ID: #USR-2 (Forensic Specialist)', 20, descBottom + 33);
 
-    // signature line
     doc.line(130, descBottom + 28, 185, descBottom + 28);
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
     doc.text('JMO Authorized Signature & Stamp', 130, descBottom + 32);
 
-    // Page Footer
     const pageHeight = doc.internal.pageSize.height;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
@@ -429,85 +402,141 @@ function CaseManagement() {
     doc.save(`Court_Report_FC-${c.case_id}.pdf`);
   };
 
+  // SVGs
+  const AddIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+
+  const CloseIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+
+  const EvidenceIcon = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+      <polygon points="12 22.08 12 12 3 6.92 3 17.08 12 22.08" />
+      <polygon points="12 22.08 21 17.08 21 6.92 12 12 12 22.08" />
+      <polygon points="12 12 21 6.92 12 1.92 3 6.92 12 12" />
+    </svg>
+  );
+
+  const ExamIcon = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+
+  const PdfIcon = () => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+
   return (
     <div style={styles.container}>
-      {/* Dynamic CSS Styles Injection for Interactive Hover/Focus/Transitions */}
       <style>{`
         .premium-input {
-          padding: 12px 14px;
-          border-radius: 8px;
-          border: 1px solid var(--border);
-          background-color: var(--bg);
-          color: var(--text-h);
+          padding: 10px 14px;
+          border-radius: 6px;
+          border: 1px solid #d1d5db;
+          background-color: #ffffff;
+          color: #111827;
           font-size: 14px;
           outline: none;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.2s ease;
           width: 100%;
           box-sizing: border-box;
         }
         .premium-input:focus {
-          border-color: var(--accent);
-          box-shadow: 0 0 0 3px var(--accent-bg);
-        }
-        .premium-input:hover {
-          border-color: rgba(168, 85, 247, 0.4);
+          border-color: #4f46e5;
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
         }
         .premium-btn-primary {
-          background-color: var(--accent);
+          background-color: #4f46e5;
           color: #ffffff;
           border: none;
           border-radius: 8px;
-          padding: 12px 20px;
-          font-size: 15px;
+          padding: 10px 18px;
+          font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          transition: all 0.25s ease;
+          box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
         .premium-btn-primary:hover:not(:disabled) {
-          opacity: 0.95;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px var(--accent-bg);
-        }
-        .premium-btn-primary:active:not(:disabled) {
-          transform: translateY(0);
+          background-color: #4338ca;
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         .premium-btn-secondary {
-          border: 1px solid var(--border);
-          background-color: transparent;
-          color: var(--text-h);
+          border: 1px solid #d1d5db;
+          background-color: #ffffff;
+          color: #374151;
           border-radius: 8px;
-          padding: 12px 20px;
+          padding: 10px 18px;
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         .premium-btn-secondary:hover {
-          background-color: var(--border);
-          color: var(--text-h);
+          background-color: #f9fafb;
+          border-color: #c7d2fe;
+          color: #4f46e5;
+        }
+        .action-btn-group {
+          display: flex;
+          gap: 6px;
+          justify-content: flex-end;
+          align-items: center;
+        }
+        .action-btn {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid #e5e7eb;
+          background-color: #ffffff;
+          color: #4b5563;
+          border-radius: 6px;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+        .action-btn:hover {
+          border-color: #4f46e5;
+          color: #4f46e5;
+          background-color: rgba(79, 70, 229, 0.02);
         }
         .drawer-close-btn {
           border: none;
           background: none;
-          font-size: 24px;
-          color: var(--text);
+          color: #9ca3af;
           cursor: pointer;
-          padding: 6px 12px;
-          border-radius: 8px;
+          padding: 6px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justifyContent: center;
           transition: all 0.2s;
         }
         .drawer-close-btn:hover {
-          background-color: var(--border);
-          color: var(--text-h);
+          background-color: #f3f4f6;
+          color: #111827;
         }
-        /* Custom Scrollbar for Drawer Body */
         .drawer-scroll::-webkit-scrollbar {
           width: 6px;
         }
@@ -515,96 +544,114 @@ function CaseManagement() {
           background: transparent;
         }
         .drawer-scroll::-webkit-scrollbar-thumb {
-          background: var(--border);
+          background: #e5e7eb;
           border-radius: 4px;
         }
         .drawer-scroll::-webkit-scrollbar-thumb:hover {
-          background: var(--text);
+          background: #d1d5db;
+        }
+        .toggle-btn {
+          flex: 1;
+          padding: 10px;
+          border: 1px solid #e5e7eb;
+          background-color: #ffffff;
+          font-size: 13px;
+          font-weight: 600;
+          color: #4b5563;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .toggle-btn.active {
+          background-color: #e0e7ff;
+          border-color: #c7d2fe;
+          color: #4f46e5;
+        }
+        .toggle-btn:first-child {
+          border-top-left-radius: 6px;
+          border-bottom-left-radius: 6px;
+          border-right: none;
+        }
+        .toggle-btn:last-child {
+          border-top-right-radius: 6px;
+          border-bottom-right-radius: 6px;
         }
       `}</style>
 
+      {/* Header Area */}
       <header style={styles.header}>
         <div style={styles.headerText}>
           <h1 style={styles.title}>Forensic Cases</h1>
-          <p style={styles.subtitle}>Log, assign, and update medico-legal cases.</p>
+          <p style={styles.subtitle}>Create, update, and manage JMO incident case files and reports.</p>
         </div>
         <button className="premium-btn-primary" onClick={openDrawer}>
-          <span>+</span> Create Forensic Case
+          <AddIcon /> Create Forensic Case
         </button>
       </header>
 
-      {loading && <div style={styles.loading}>Loading case records...</div>}
-      {error && <div style={styles.error}>Connection Error: {error}. Make sure the backend server is running and database tables exist.</div>}
+      {loading && <div style={styles.loading}>Loading case files...</div>}
+      {error && <div style={styles.error}>Connection Error: {error}. Check backend server.</div>}
 
+      {/* Cases Table */}
       {!loading && !error && (
         <section style={styles.tableCard}>
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div className="table-wrapper">
+            <table className="premium-table">
               <thead>
-                <tr style={styles.tr}>
-                  <th style={styles.th}>Case ID</th>
-                  <th style={styles.th}>Linked Patient</th>
-                  <th style={styles.th}>JMO / Doctor ID</th>
-                  <th style={styles.th}>Police Station</th>
-                  <th style={styles.th}>Requesting Court</th>
-                  <th style={styles.th}>Case Type</th>
-                  <th style={styles.th}>Incident Date</th>
-                  <th style={styles.th}>Case Status</th>
-                  <th style={styles.th}>Description</th>
-                  <th style={{ ...styles.th, textAlign: 'right' }}>Actions</th>
+                <tr>
+                  <th>Case ID</th>
+                  <th>Linked Patient</th>
+                  <th>JMO / Doctor</th>
+                  <th>Police Station</th>
+                  <th>Requesting Court</th>
+                  <th>Case Type</th>
+                  <th>Incident Date</th>
+                  <th>Case Status</th>
+                  <th>Description</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {cases.length === 0 ? (
-                  <tr style={styles.tr}>
-                    <td colSpan="10" style={{ ...styles.td, textAlign: 'center', color: 'var(--text)' }}>
-                      No records found
+                  <tr>
+                    <td colSpan="10" style={{ textAlign: 'center', color: '#9ca3af', padding: '30px' }}>
+                      No forensic case files logged.
                     </td>
                   </tr>
                 ) : (
                   cases.map((c) => (
-                    <tr key={c.case_id} style={styles.tr}>
-                      <td style={{ ...styles.td, fontWeight: 'bold' }}>#{c.case_id}</td>
-                      <td style={{ ...styles.td, fontWeight: '500' }}>
+                    <tr key={c.case_id}>
+                      <td style={{ fontWeight: '600', color: '#4f46e5' }}>#FC-{c.case_id}</td>
+                      <td style={{ fontWeight: '500', color: '#111827' }}>
                         {c.patient_name || `Patient #${c.patient_id}`}
                       </td>
-                      <td style={styles.td}>#USR-{c.user_id}</td>
-                      <td style={styles.td}>{c.station_name || 'N/A'}</td>
-                      <td style={styles.td}>{c.court_name || 'N/A'}</td>
-                      <td style={styles.td}>{c.case_type_name || 'N/A'}</td>
-                      <td style={styles.td}>{formatDate(c.incident_date)}</td>
-                      <td style={styles.td}>
+                      <td>JMO-{c.user_id}</td>
+                      <td>{c.station_name || '—'}</td>
+                      <td>{c.court_name || '—'}</td>
+                      <td>{c.case_type_name || '—'}</td>
+                      <td>{formatDate(c.incident_date)}</td>
+                      <td>
                         <span style={{ 
                           ...styles.statusBadge, 
-                          backgroundColor: 'var(--accent-bg)', 
-                          color: 'var(--accent)' 
+                          ...(c.case_status_name === 'Open' ? styles.badgeOpen : 
+                              c.case_status_name === 'Closed' ? styles.badgeClosed : 
+                              styles.badgePending) 
                         }}>
                           {c.case_status_name || 'Unknown'}
                         </span>
                       </td>
-                      <td style={styles.td}>{c.description || 'N/A'}</td>
-                      <td style={{ ...styles.td, textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                          <button 
-                            className="premium-btn-secondary" 
-                            style={{ padding: '6px 10px', fontSize: '11px', whiteSpace: 'nowrap' }} 
-                            onClick={() => openEvidenceDrawer(c)}
-                          >
-                            📦 Evidence
+                      <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {c.description || '—'}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="action-btn-group">
+                          <button className="action-btn" onClick={() => openEvidenceDrawer(c)}>
+                            <EvidenceIcon /> Evidence
                           </button>
-                          <button 
-                            className="premium-btn-secondary" 
-                            style={{ padding: '6px 10px', fontSize: '11px', whiteSpace: 'nowrap' }} 
-                            onClick={() => openExamDrawer(c)}
-                          >
-                            ⚕️ Add Exam
+                          <button className="action-btn" onClick={() => openExamDrawer(c)}>
+                            <ExamIcon /> Add Exam
                           </button>
-                          <button 
-                            className="premium-btn-secondary" 
-                            style={{ padding: '6px 10px', fontSize: '11px', whiteSpace: 'nowrap' }} 
-                            onClick={() => generatePDF(c)}
-                          >
-                            📄 PDF
+                          <button className="action-btn" onClick={() => generatePDF(c)}>
+                            <PdfIcon /> PDF
                           </button>
                         </div>
                       </td>
@@ -617,13 +664,13 @@ function CaseManagement() {
         </section>
       )}
 
-      {/* Sliding Side-Panel 1 (Create Forensic Case Drawer) */}
+      {/* Drawer 1: Create Case Drawer */}
       {isDrawerOpen && (
         <div 
           style={{
             ...styles.drawerOverlay,
-            backgroundColor: isDrawerVisible ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0)',
-            backdropFilter: isDrawerVisible ? 'blur(8px)' : 'blur(0px)',
+            backgroundColor: isDrawerVisible ? 'rgba(17, 24, 39, 0.4)' : 'rgba(17, 24, 39, 0)',
+            backdropFilter: isDrawerVisible ? 'blur(4px)' : 'blur(0px)',
           }} 
           onClick={closeDrawer}
         >
@@ -634,18 +681,17 @@ function CaseManagement() {
             }} 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div style={styles.drawerHeader}>
               <div>
                 <h2 style={styles.drawerTitle}>Create Forensic Case</h2>
-                <p style={styles.drawerSubtitle}>Register a new medico-legal incident record.</p>
+                <p style={styles.drawerSubtitle}>Create a new legal/medical inquiry case.</p>
               </div>
-              <button className="drawer-close-btn" onClick={closeDrawer}>&times;</button>
+              <button className="drawer-close-btn" onClick={closeDrawer}>
+                <CloseIcon />
+              </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleFormSubmit} style={styles.formContainer}>
-              {/* Scrollable body */}
               <div className="drawer-scroll" style={styles.drawerBody}>
                 {formSubmitError && <div style={styles.formError}>{formSubmitError}</div>}
                 
@@ -663,7 +709,7 @@ function CaseManagement() {
                     ) : (
                       patients.map(p => (
                         <option key={p.patient_id} value={p.patient_id}>
-                          {p.full_name} (NIC: {p.nic || 'N/A'})
+                          {p.full_name} (NIC: {p.nic || '—'})
                         </option>
                       ))
                     )}
@@ -676,10 +722,10 @@ function CaseManagement() {
                     <input 
                       type="text" 
                       name="user_id" 
-                      value={formData.user_id} 
+                      value={`JMO Specialist #${formData.user_id}`} 
                       disabled 
                       className="premium-input"
-                      style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                      style={{ opacity: 0.8, backgroundColor: '#f9fafb', cursor: 'not-allowed' }}
                     />
                   </div>
                   <div style={styles.formGroup}>
@@ -758,14 +804,13 @@ function CaseManagement() {
                     rows="3" 
                     value={formData.description} 
                     onChange={handleInputChange} 
-                    placeholder="Enter details of the forensic clinical report or incident..."
+                    placeholder="Enter observations, request details, or MLEF summary..."
                     className="premium-input"
                     style={{ resize: 'vertical', fontFamily: 'inherit' }}
                   ></textarea>
                 </div>
               </div>
 
-              {/* Actions Footer */}
               <div style={styles.drawerFooter}>
                 <button type="button" className="premium-btn-secondary" onClick={closeDrawer}>
                   Cancel
@@ -774,9 +819,9 @@ function CaseManagement() {
                   type="submit" 
                   disabled={isSubmitting} 
                   className="premium-btn-primary"
-                  style={{ minWidth: '150px', justifyContent: 'center' }}
+                  style={{ minWidth: '130px', justifyContent: 'center' }}
                 >
-                  {isSubmitting ? 'Creating...' : 'Create Case'}
+                  {isSubmitting ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </form>
@@ -784,13 +829,13 @@ function CaseManagement() {
         </div>
       )}
 
-      {/* Sliding Side-Panel 2 (Exam Details Drawer) */}
+      {/* Drawer 2: Exam Details Drawer */}
       {isExamDrawerOpen && (
         <div 
           style={{
             ...styles.drawerOverlay,
-            backgroundColor: isExamDrawerVisible ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0)',
-            backdropFilter: isExamDrawerVisible ? 'blur(8px)' : 'blur(0px)',
+            backgroundColor: isExamDrawerVisible ? 'rgba(17, 24, 39, 0.4)' : 'rgba(17, 24, 39, 0)',
+            backdropFilter: isExamDrawerVisible ? 'blur(4px)' : 'blur(0px)',
           }} 
           onClick={closeExamDrawer}
         >
@@ -801,52 +846,42 @@ function CaseManagement() {
             }} 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div style={styles.drawerHeader}>
               <div>
-                <h2 style={styles.drawerTitle}>Add Examination Findings</h2>
-                <p style={styles.drawerSubtitle}>
-                  Case: #{selectedCaseForExam?.case_id} — {selectedCaseForExam?.patient_name}
-                </p>
+                <h2 style={styles.drawerTitle}>Record Medical Examination</h2>
+                <p style={styles.drawerSubtitle}>Case: #FC-{selectedCaseForExam?.case_id} ({selectedCaseForExam?.patient_name})</p>
               </div>
-              <button className="drawer-close-btn" onClick={closeExamDrawer}>&times;</button>
+              <button className="drawer-close-btn" onClick={closeExamDrawer}>
+                <CloseIcon />
+              </button>
             </div>
 
-            {/* Toggle Switch */}
-            <div style={{ padding: '20px 24px 0 24px' }}>
-              <div style={styles.toggleContainer}>
-                <button 
-                  type="button" 
-                  style={{
-                    ...styles.toggleBtn,
-                    ...(examType === 'clinical' ? styles.toggleBtnActive : {})
-                  }}
-                  onClick={() => setExamType('clinical')}
-                >
-                  Clinical Examination
-                </button>
-                <button 
-                  type="button" 
-                  style={{
-                    ...styles.toggleBtn,
-                    ...(examType === 'postmortem' ? styles.toggleBtnActive : {})
-                  }}
-                  onClick={() => setExamType('postmortem')}
-                >
-                  Postmortem / Autopsy
-                </button>
-              </div>
+            {/* Segment Controller */}
+            <div style={{ padding: '20px 30px 0 30px', display: 'flex' }}>
+              <button 
+                type="button" 
+                className={`toggle-btn ${examType === 'clinical' ? 'active' : ''}`}
+                onClick={() => setExamType('clinical')}
+              >
+                Clinical Exam
+              </button>
+              <button 
+                type="button" 
+                className={`toggle-btn ${examType === 'postmortem' ? 'active' : ''}`}
+                onClick={() => setExamType('postmortem')}
+              >
+                Postmortem / Autopsy
+              </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={handleExamSubmit} style={styles.formContainer}>
-              <div className="drawer-scroll" style={{ ...styles.drawerBody, paddingTop: '10px' }}>
+              <div className="drawer-scroll" style={styles.drawerBody}>
                 {examSubmitError && <div style={styles.formError}>{examSubmitError}</div>}
 
                 {examType === 'clinical' ? (
                   <>
                     <div style={styles.formGroup}>
-                      <label style={styles.label}>Clinical Exam Type *</label>
+                      <label style={styles.label}>Clinical Assessment Type</label>
                       <select 
                         name="exam_type_id" 
                         value={clinicalData.exam_type_id} 
@@ -859,14 +894,14 @@ function CaseManagement() {
                       </select>
                     </div>
                     <div style={styles.formGroup}>
-                      <label style={styles.label}>Injury Details *</label>
+                      <label style={styles.label}>Injury & Observations *</label>
                       <textarea 
                         name="injury_details" 
-                        rows="8" 
+                        rows="6" 
                         value={clinicalData.injury_details} 
                         onChange={handleClinicalChange} 
-                        placeholder="Log detailed notes of the abrasions, lacerations, contusions, fractures, or other external/internal traumas observed..."
                         required
+                        placeholder="Log detailed description of wounds, fractures, abrasions, etc..."
                         className="premium-input"
                         style={{ resize: 'vertical', fontFamily: 'inherit' }}
                       ></textarea>
@@ -875,7 +910,7 @@ function CaseManagement() {
                 ) : (
                   <>
                     <div style={styles.formGroup}>
-                      <label style={styles.label}>Cause of Death Category *</label>
+                      <label style={styles.label}>Cause of Death Category</label>
                       <select 
                         name="cod_category_id" 
                         value={postmortemData.cod_category_id} 
@@ -889,14 +924,14 @@ function CaseManagement() {
                       </select>
                     </div>
                     <div style={styles.formGroup}>
-                      <label style={styles.label}>Cause of Death / Autopsy Notes *</label>
+                      <label style={styles.label}>Anatomical & Cause of Death Details *</label>
                       <textarea 
                         name="cause_of_death" 
-                        rows="8" 
+                        rows="6" 
                         value={postmortemData.cause_of_death} 
                         onChange={handlePostmortemChange} 
-                        placeholder="State the primary and secondary causes of death, pathological findings, and external autopsy diagnostics..."
                         required
+                        placeholder="State anatomical findings and official opinion on cause of death..."
                         className="premium-input"
                         style={{ resize: 'vertical', fontFamily: 'inherit' }}
                       ></textarea>
@@ -905,7 +940,6 @@ function CaseManagement() {
                 )}
               </div>
 
-              {/* Actions Footer */}
               <div style={styles.drawerFooter}>
                 <button type="button" className="premium-btn-secondary" onClick={closeExamDrawer}>
                   Cancel
@@ -914,9 +948,9 @@ function CaseManagement() {
                   type="submit" 
                   disabled={isExamSubmitting} 
                   className="premium-btn-primary"
-                  style={{ minWidth: '150px', justifyContent: 'center' }}
+                  style={{ minWidth: '130px', justifyContent: 'center' }}
                 >
-                  {isExamSubmitting ? 'Saving Findings...' : 'Save Findings'}
+                  {isExamSubmitting ? 'Saving...' : 'Save Exam'}
                 </button>
               </div>
             </form>
@@ -924,13 +958,13 @@ function CaseManagement() {
         </div>
       )}
 
-      {/* Sliding Side-Panel 3 (Evidence Tracking Drawer) */}
+      {/* Drawer 3: Evidence Log Drawer */}
       {isEvidenceDrawerOpen && (
         <div 
           style={{
             ...styles.drawerOverlay,
-            backgroundColor: isEvidenceDrawerVisible ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0)',
-            backdropFilter: isEvidenceDrawerVisible ? 'blur(8px)' : 'blur(0px)',
+            backgroundColor: isEvidenceDrawerVisible ? 'rgba(17, 24, 39, 0.4)' : 'rgba(17, 24, 39, 0)',
+            backdropFilter: isEvidenceDrawerVisible ? 'blur(4px)' : 'blur(0px)',
           }} 
           onClick={closeEvidenceDrawer}
         >
@@ -938,67 +972,65 @@ function CaseManagement() {
             style={{
               ...styles.drawer,
               transform: isEvidenceDrawerVisible ? 'translateX(0)' : 'translateX(100%)',
-              maxWidth: '560px' // slightly wider for double layout
             }} 
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
             <div style={styles.drawerHeader}>
               <div>
-                <h2 style={styles.drawerTitle}>Evidence & Custody Log</h2>
-                <p style={styles.drawerSubtitle}>
-                  Case: #{selectedCaseForEvidence?.case_id} — {selectedCaseForEvidence?.patient_name}
-                </p>
+                <h2 style={styles.drawerTitle}>Evidence & Exhibits Log</h2>
+                <p style={styles.drawerSubtitle}>Case: #FC-{selectedCaseForEvidence?.case_id} ({selectedCaseForEvidence?.patient_name})</p>
               </div>
-              <button className="drawer-close-btn" onClick={closeEvidenceDrawer}>&times;</button>
+              <button className="drawer-close-btn" onClick={closeEvidenceDrawer}>
+                <CloseIcon />
+              </button>
             </div>
 
-            <div className="drawer-scroll" style={{ ...styles.drawerBody, paddingBottom: '10px' }}>
-              
-              {/* Existing Logs Section */}
-              <h3 style={styles.sectionSubHeader}>Logged Evidence Items</h3>
-              {evidenceLoading && <div style={{ fontSize: '13px', color: 'var(--text)' }}>Retrieving evidence records...</div>}
-              {evidenceError && <div style={styles.formError}>Error loading evidence: {evidenceError}</div>}
-              
-              {!evidenceLoading && !evidenceError && (
-                <div style={{ maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }} className="drawer-scroll">
-                  {evidenceList.length === 0 ? (
-                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--text)', fontStyle: 'italic' }}>
-                      No evidence has been logged for this case yet.
-                    </p>
-                  ) : (
-                    evidenceList.map((item) => (
-                      <div key={item.evidence_id} style={styles.evidenceCard}>
-                        <div style={{ ...styles.evidenceCardColor, backgroundColor: getStatusColor(item.evidence_status_id) }}></div>
-                        <div style={styles.evidenceCardContent}>
-                          <div style={styles.evidenceCardHeader}>
-                            <span style={styles.evidenceCardId}>#EVD-{item.evidence_id}</span>
-                            <span style={{ ...styles.evidenceCardStatus, color: getStatusColor(item.evidence_status_id) }}>
-                              {item.evidence_status_name}
-                            </span>
-                          </div>
-                          <p style={styles.evidenceCardDesc}>{item.description || 'No description provided'}</p>
-                          <div style={styles.evidenceCardMeta}>
-                            <span>📂 {item.evidence_type_name}</span>
-                            <span>📍 {item.storage_location_name}</span>
-                            <span>📅 {formatDate(item.collected_date)}</span>
-                          </div>
+            <div className="drawer-scroll" style={{ ...styles.drawerBody, paddingBottom: '0' }}>
+              {/* Evidence Logged List */}
+              <div style={styles.evidenceListContainer}>
+                <h4 style={styles.subSectionTitle}>Logged Exhibits</h4>
+                {evidenceLoading ? (
+                  <div style={styles.miniLabel}>Loading chain of custody...</div>
+                ) : evidenceError ? (
+                  <div style={styles.miniError}>{evidenceError}</div>
+                ) : evidenceList.length === 0 ? (
+                  <div style={styles.emptyStateText}>No physical evidence logs created yet.</div>
+                ) : (
+                  <div style={styles.evidenceList}>
+                    {evidenceList.map(e => (
+                      <div key={e.evidence_id} style={styles.evidenceItem}>
+                        <div style={styles.evidenceHeader}>
+                          <span style={styles.evidenceType}>{e.evidence_type_name}</span>
+                          <span style={{ 
+                            ...styles.evidenceStatus, 
+                            ...(e.evidence_status_id === 1 ? styles.badgeOpen : 
+                                e.evidence_status_id === 3 ? styles.badgeClosed : 
+                                styles.badgePending)
+                          }}>
+                            {e.evidence_status_name}
+                          </span>
+                        </div>
+                        <p style={styles.evidenceDesc}>{e.description || 'No description recorded.'}</p>
+                        <div style={styles.evidenceMeta}>
+                          Loc: <b>{e.storage_location_name}</b> | Logged: {new Date(e.collected_date).toLocaleString()}
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              {/* Form Input Section */}
-              <h3 style={{ ...styles.sectionSubHeader, marginTop: '20px' }}>Log New Evidence Item</h3>
-              
-              <form onSubmit={handleEvidenceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Log Form Divider */}
+              <div style={styles.divider}></div>
+
+              {/* Add Evidence Form */}
+              <form onSubmit={handleEvidenceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '30px' }}>
+                <h4 style={styles.subSectionTitle}>Log New Exhibit</h4>
                 {evidenceSubmitError && <div style={styles.formError}>{evidenceSubmitError}</div>}
-
+                
                 <div style={styles.formRow}>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Evidence Type *</label>
+                    <label style={styles.label}>Exhibit Type</label>
                     <select 
                       name="evidence_type_id" 
                       value={evidenceFormData.evidence_type_id} 
@@ -1012,7 +1044,7 @@ function CaseManagement() {
                     </select>
                   </div>
                   <div style={styles.formGroup}>
-                    <label style={styles.label}>Storage Location *</label>
+                    <label style={styles.label}>Storage Unit</label>
                     <select 
                       name="storage_id" 
                       value={evidenceFormData.storage_id} 
@@ -1026,51 +1058,43 @@ function CaseManagement() {
                   </div>
                 </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Status *</label>
-                  <select 
-                    name="evidence_status_id" 
-                    value={evidenceFormData.evidence_status_id} 
-                    onChange={handleEvidenceChange} 
-                    className="premium-input"
-                  >
-                    <option value="1">Logged</option>
-                    <option value="2">At Lab</option>
-                    <option value="3">Returned</option>
-                    <option value="4">Disposed</option>
-                  </select>
+                <div style={styles.formRow}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Initial Status</label>
+                    <select 
+                      name="evidence_status_id" 
+                      value={evidenceFormData.evidence_status_id} 
+                      onChange={handleEvidenceChange} 
+                      className="premium-input"
+                    >
+                      <option value="1">Logged</option>
+                      <option value="2">At Lab</option>
+                      <option value="3">Returned</option>
+                      <option value="4">Disposed</option>
+                    </select>
+                  </div>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Description & Notes</label>
+                    <input 
+                      type="text" 
+                      name="description" 
+                      value={evidenceFormData.description} 
+                      onChange={handleEvidenceChange} 
+                      placeholder="e.g. Sealed blood vial with barcode"
+                      className="premium-input"
+                    />
+                  </div>
                 </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label}>Description / Details</label>
-                  <input 
-                    type="text" 
-                    name="description" 
-                    value={evidenceFormData.description} 
-                    onChange={handleEvidenceChange} 
-                    placeholder="e.g. Swab taken from suspect's right hand"
-                    className="premium-input"
-                    required
-                  />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                  <button 
-                    type="submit" 
-                    disabled={isEvidenceSubmitting} 
-                    className="premium-btn-primary"
-                    style={{ minWidth: '150px', justifyContent: 'center' }}
-                  >
-                    {isEvidenceSubmitting ? 'Logging...' : 'Log Evidence'}
-                  </button>
-                </div>
+                <button type="submit" disabled={isEvidenceSubmitting} className="premium-btn-primary" style={{ justifyContent: 'center' }}>
+                  {isEvidenceSubmitting ? 'Logging...' : 'Log Exhibit'}
+                </button>
               </form>
             </div>
-
-            {/* Actions Footer */}
+            
             <div style={styles.drawerFooter}>
               <button type="button" className="premium-btn-secondary" onClick={closeEvidenceDrawer}>
-                Done
+                Close
               </button>
             </div>
           </div>
@@ -1082,12 +1106,11 @@ function CaseManagement() {
 
 const styles = {
   container: {
-    padding: '40px',
+    padding: '32px 40px',
     fontFamily: 'var(--sans)',
-    color: 'var(--text-h)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '30px',
+    gap: '32px',
   },
   header: {
     display: 'flex',
@@ -1100,68 +1123,90 @@ const styles = {
     flexDirection: 'column',
   },
   title: {
-    margin: '0 0 5px 0',
-    fontSize: '32px',
+    margin: '0 0 6px 0',
+    fontSize: '28px',
     fontWeight: '700',
+    color: '#111827',
     letterSpacing: '-0.5px',
   },
   subtitle: {
     margin: 0,
-    color: 'var(--text)',
-    fontSize: '16px',
+    color: '#6b7280',
+    fontSize: '14px',
   },
   loading: {
-    padding: '20px',
-    fontSize: '16px',
-    color: 'var(--text)',
+    padding: '24px',
+    fontSize: '14px',
+    color: '#6b7280',
     textAlign: 'left',
   },
   error: {
-    padding: '20px',
-    fontSize: '15px',
+    padding: '16px',
+    fontSize: '14px',
     color: '#ef4444',
-    backgroundColor: 'var(--accent-bg)',
+    backgroundColor: '#fef2f2',
     borderRadius: '8px',
-    border: '1px solid var(--accent-border)',
+    border: '1px solid #fee2e2',
     textAlign: 'left',
-    lineHeight: '1.6',
   },
   tableCard: {
-    backgroundColor: 'var(--card-bg, #ffffff)',
-    border: '1px solid var(--border)',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e5e7eb',
     borderRadius: '12px',
-    padding: '25px',
-    boxShadow: 'var(--shadow)',
+    padding: '28px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03)',
     textAlign: 'left',
   },
   tableWrapper: {
     overflowX: 'auto',
+    borderRadius: '8px',
+    border: '1px solid #f0f0f0',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
   },
+  trHead: {
+    backgroundColor: '#fafafa',
+    borderBottom: '1px solid #f0f0f0',
+  },
   tr: {
-    borderBottom: '1px solid var(--border)',
+    borderBottom: '1px solid #f3f4f6',
+    transition: 'background-color 0.2s',
   },
   th: {
-    padding: '12px 16px',
+    padding: '14px 20px',
     fontWeight: '600',
     textAlign: 'left',
-    color: 'var(--text)',
-    fontSize: '14px',
+    color: '#4b5563',
+    fontSize: '12px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
   },
   td: {
-    padding: '14px 16px',
+    padding: '16px 20px',
     fontSize: '14px',
-    color: 'var(--text-h)',
+    color: '#4b5563',
   },
   statusBadge: {
-    padding: '4px 8px',
-    borderRadius: '6px',
-    fontSize: '12px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '4px 10px',
+    borderRadius: '50px',
+    fontSize: '11px',
     fontWeight: '600',
-    display: 'inline-block',
+  },
+  badgeOpen: {
+    backgroundColor: '#fef3c7',
+    color: '#d97706',
+  },
+  badgeClosed: {
+    backgroundColor: '#d1fae5',
+    color: '#059669',
+  },
+  badgePending: {
+    backgroundColor: '#dbeafe',
+    color: '#2563eb',
   },
   drawerOverlay: {
     position: 'fixed',
@@ -1178,17 +1223,17 @@ const styles = {
     width: '100%',
     maxWidth: '520px',
     height: '100%',
-    backgroundColor: 'var(--card-bg)',
-    borderLeft: '1px solid var(--border)',
-    boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.15)',
+    backgroundColor: '#ffffff',
+    borderLeft: '1px solid #e5e7eb',
+    boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.08)',
     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     display: 'flex',
     flexDirection: 'column',
     boxSizing: 'border-box',
   },
   drawerHeader: {
-    padding: '24px',
-    borderBottom: '1px solid var(--border)',
+    padding: '24px 30px',
+    borderBottom: '1px solid #f3f4f6',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1196,28 +1241,29 @@ const styles = {
   },
   drawerTitle: {
     margin: 0,
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '700',
-    color: 'var(--text-h)',
+    color: '#111827',
   },
   drawerSubtitle: {
     margin: '4px 0 0 0',
     fontSize: '13px',
-    color: 'var(--text)',
+    color: '#6b7280',
   },
   formContainer: {
     display: 'flex',
     flexDirection: 'column',
-    height: 'calc(100% - 93px)', // dynamic height offset for header
+    flexGrow: 1,
     margin: 0,
+    overflow: 'hidden',
   },
   drawerBody: {
-    padding: '24px',
+    padding: '30px',
     flexGrow: 1,
     overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '24px',
     textAlign: 'left',
   },
   formGroup: {
@@ -1233,113 +1279,98 @@ const styles = {
   label: {
     fontSize: '13px',
     fontWeight: '600',
-    color: 'var(--text-h)',
+    color: '#374151',
   },
   drawerFooter: {
-    padding: '20px 24px',
-    borderTop: '1px solid var(--border)',
+    padding: '20px 30px',
+    borderTop: '1px solid #f3f4f6',
     display: 'flex',
     justifyContent: 'flex-end',
     gap: '12px',
-    backgroundColor: 'var(--card-bg)',
+    backgroundColor: '#fafafa',
   },
   formError: {
     color: '#ef4444',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-    borderRadius: '8px',
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
+    borderRadius: '6px',
     padding: '12px',
-    fontSize: '14px',
+    fontSize: '13px',
     lineHeight: '1.4',
   },
-  toggleContainer: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    backgroundColor: 'var(--bg)',
-    borderRadius: '10px',
-    padding: '4px',
-    border: '1px solid var(--border)',
-    marginBottom: '8px',
-  },
-  toggleBtn: {
-    border: 'none',
-    backgroundColor: 'transparent',
-    color: 'var(--text)',
-    padding: '10px',
-    borderRadius: '8px',
-    fontSize: '13px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  toggleBtnActive: {
-    backgroundColor: 'var(--accent)',
-    color: '#ffffff',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  },
-  // Evidence Card Styles
-  evidenceCard: {
-    backgroundColor: 'var(--bg)',
-    border: '1px solid var(--border)',
-    borderRadius: '10px',
-    margin: '0 0 12px 0',
-    position: 'relative',
-    overflow: 'hidden',
-    display: 'flex',
-    transition: 'all 0.2s ease',
-  },
-  evidenceCardColor: {
-    width: '4px',
-    minWidth: '4px',
-  },
-  evidenceCardContent: {
-    padding: '12px 16px',
-    flexGrow: 1,
+  evidenceListContainer: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
-    textAlign: 'left',
+    gap: '12px',
   },
-  evidenceCardHeader: {
+  subSectionTitle: {
+    fontSize: '14px',
+    fontWeight: '700',
+    color: '#111827',
+    margin: '0 0 6px 0',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  evidenceList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    maxHeight: '260px',
+    overflowY: 'auto',
+  },
+  evidenceItem: {
+    backgroundColor: '#f9fafb',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+    padding: '14px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  evidenceHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  evidenceCardId: {
-    fontWeight: '700',
+  evidenceType: {
     fontSize: '13px',
-    color: 'var(--text-h)',
-  },
-  evidenceCardStatus: {
     fontWeight: '600',
-    fontSize: '11px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
+    color: '#111827',
   },
-  evidenceCardDesc: {
-    margin: 0,
-    fontSize: '13.5px',
-    color: 'var(--text-h)',
-    lineHeight: '1.4',
-  },
-  evidenceCardMeta: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '12px',
+  evidenceStatus: {
+    padding: '2px 8px',
+    borderRadius: '4px',
     fontSize: '11px',
-    color: 'var(--text)',
+    fontWeight: '600',
+  },
+  evidenceDesc: {
+    margin: '4px 0',
+    fontSize: '13px',
+    color: '#4b5563',
+  },
+  evidenceMeta: {
+    fontSize: '11px',
+    color: '#9ca3af',
     marginTop: '2px',
   },
-  sectionSubHeader: {
+  divider: {
+    height: '1px',
+    backgroundColor: '#f0f0f0',
+    margin: '12px 0',
+  },
+  emptyStateText: {
     fontSize: '13px',
-    fontWeight: '700',
-    color: 'var(--text-h)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    margin: '15px 0 10px 0',
-    borderBottom: '1px solid var(--border)',
-    paddingBottom: '6px',
-    textAlign: 'left',
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    padding: '16px 0',
+  },
+  miniLabel: {
+    fontSize: '12px',
+    color: '#6b7280',
+  },
+  miniError: {
+    fontSize: '12px',
+    color: '#ef4444',
   }
 };
 

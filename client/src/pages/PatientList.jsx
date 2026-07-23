@@ -6,7 +6,7 @@ function PatientList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Drawer States for smooth slide-in transition
+  // Drawer States
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
@@ -47,7 +47,7 @@ function PatientList() {
     setIsDrawerOpen(true);
     setTimeout(() => {
       setIsDrawerVisible(true);
-    }, 10); // small delay to trigger CSS transition
+    }, 10);
   };
 
   const closeDrawer = () => {
@@ -55,7 +55,7 @@ function PatientList() {
     setTimeout(() => {
       setIsDrawerOpen(false);
       setFormSubmitError(null);
-    }, 300); // matching the transition duration
+    }, 300);
   };
 
   const handleInputChange = (e) => {
@@ -79,7 +79,6 @@ function PatientList() {
       .then(() => {
         setIsSubmitting(false);
         closeDrawer();
-        // Clear form
         setFormData({
           full_name: '',
           nic: '',
@@ -90,7 +89,7 @@ function PatientList() {
           blood_group_id: '1',
           address: ''
         });
-        fetchPatients(); // Re-fetch the updated list
+        fetchPatients();
       })
       .catch((err) => {
         console.error('Error creating patient:', err);
@@ -110,85 +109,92 @@ function PatientList() {
     }
   };
 
+  // SVGs
+  const AddIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  );
+
+  const CloseIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+
   return (
     <div style={styles.container}>
-      {/* Dynamic CSS Styles Injection for Interactive Hover/Focus/Transitions */}
       <style>{`
         .premium-input {
-          padding: 12px 14px;
-          border-radius: 8px;
-          border: 1px solid var(--border);
-          background-color: var(--bg);
-          color: var(--text-h);
+          padding: 10px 14px;
+          border-radius: 6px;
+          border: 1px solid #d1d5db;
+          background-color: #ffffff;
+          color: #111827;
           font-size: 14px;
           outline: none;
-          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: all 0.2s ease;
           width: 100%;
           box-sizing: border-box;
         }
         .premium-input:focus {
-          border-color: var(--accent);
-          box-shadow: 0 0 0 3px var(--accent-bg);
-        }
-        .premium-input:hover {
-          border-color: rgba(168, 85, 247, 0.4);
+          border-color: #4f46e5;
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
         }
         .premium-btn-primary {
-          background-color: var(--accent);
+          background-color: #4f46e5;
           color: #ffffff;
           border: none;
           border-radius: 8px;
-          padding: 12px 20px;
-          font-size: 15px;
+          padding: 10px 18px;
+          font-size: 14px;
           font-weight: 600;
           cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          transition: all 0.25s ease;
+          box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
+          transition: all 0.2s ease;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
         .premium-btn-primary:hover:not(:disabled) {
-          opacity: 0.95;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px var(--accent-bg);
-        }
-        .premium-btn-primary:active:not(:disabled) {
-          transform: translateY(0);
+          background-color: #4338ca;
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
         }
         .premium-btn-secondary {
-          border: 1px solid var(--border);
-          background-color: transparent;
-          color: var(--text-h);
+          border: 1px solid #d1d5db;
+          background-color: #ffffff;
+          color: #374151;
           border-radius: 8px;
-          padding: 12px 20px;
+          padding: 10px 18px;
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         .premium-btn-secondary:hover {
-          background-color: var(--border);
-          color: var(--text-h);
+          background-color: #f9fafb;
+          border-color: #c7d2fe;
+          color: #4f46e5;
         }
         .drawer-close-btn {
           border: none;
           background: none;
-          font-size: 24px;
-          color: var(--text);
+          color: #9ca3af;
           cursor: pointer;
-          padding: 6px 12px;
-          border-radius: 8px;
+          padding: 6px;
+          border-radius: 6px;
           display: flex;
           align-items: center;
           justifyContent: center;
           transition: all 0.2s;
         }
         .drawer-close-btn:hover {
-          background-color: var(--border);
-          color: var(--text-h);
+          background-color: #f3f4f6;
+          color: #111827;
         }
-        /* Custom Scrollbar for Drawer Body */
         .drawer-scroll::-webkit-scrollbar {
           width: 6px;
         }
@@ -196,63 +202,67 @@ function PatientList() {
           background: transparent;
         }
         .drawer-scroll::-webkit-scrollbar-thumb {
-          background: var(--border);
+          background: #e5e7eb;
           border-radius: 4px;
         }
         .drawer-scroll::-webkit-scrollbar-thumb:hover {
-          background: var(--text);
+          background: #d1d5db;
         }
       `}</style>
 
+      {/* Header Area */}
       <header style={styles.header}>
         <div style={styles.headerText}>
           <h1 style={styles.title}>Patient Directory</h1>
-          <p style={styles.subtitle}>View, manage, and register patients in the system.</p>
+          <p style={styles.subtitle}>Register and manage central medical files for forensic consultation.</p>
         </div>
         <button className="premium-btn-primary" onClick={openDrawer}>
-          <span>+</span> Register Patient
+          <AddIcon /> Register Patient
         </button>
       </header>
 
-      {loading && <div style={styles.loading}>Loading patient records...</div>}
-      {error && <div style={styles.error}>Connection Error: {error}. Make sure the backend server is running and database tables exist.</div>}
+      {loading && <div style={styles.loading}>Loading clinical files...</div>}
+      {error && <div style={styles.error}>Connection Error: {error}. Check backend server.</div>}
 
+      {/* Patients Table Card */}
       {!loading && !error && (
         <section style={styles.tableCard}>
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
+          <div className="table-wrapper">
+            <table className="premium-table">
               <thead>
-                <tr style={styles.tr}>
-                  <th style={styles.th}>ID</th>
-                  <th style={styles.th}>Full Name</th>
-                  <th style={styles.th}>NIC</th>
-                  <th style={styles.th}>Date of Birth</th>
-                  <th style={styles.th}>Gender</th>
-                  <th style={styles.th}>District</th>
-                  <th style={styles.th}>Blood Group</th>
-                  <th style={styles.th}>Address</th>
+                <tr>
+                  <th>ID</th>
+                  <th>Full Name</th>
+                  <th>NIC</th>
+                  <th>Date of Birth</th>
+                  <th>Gender</th>
+                  <th>District</th>
+                  <th>Blood Group</th>
+                  <th>Address</th>
                 </tr>
               </thead>
               <tbody>
                 {patients.length === 0 ? (
-                  <tr style={styles.tr}>
-                    <td colSpan="8" style={{ ...styles.td, textAlign: 'center', color: 'var(--text)' }}>
-                      No records found
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center', color: '#9ca3af', padding: '30px' }}>
+                      No patient files registered in system.
                     </td>
                   </tr>
                 ) : (
                   patients.map((patient) => (
-                    <tr key={patient.patient_id} style={styles.tr}>
-                      <td style={{ ...styles.td, fontWeight: 'bold' }}>
+                    <tr key={patient.patient_id}>
+                      <td style={{ fontWeight: '600', color: '#4f46e5' }}>
                         #PAT-{patient.patient_id}
                       </td>
-                      <td style={{ ...styles.td, fontWeight: '500' }}>{patient.full_name}</td>
-                      <td style={styles.td}>{patient.nic || 'N/A'}</td>
-                      <td style={styles.td}>{formatDate(patient.dob)}</td>
-                      <td style={styles.td}>{patient.gender_name || 'N/A'}</td>
-                      <td style={styles.td}>{patient.district_name || 'N/A'}</td>
-                      <td style={styles.td}>{patient.blood_group_name || 'N/A'}</td>
-                      <td style={styles.td}>{patient.address || 'N/A'}</td>
+                      <td style={{ fontWeight: '500', color: '#111827' }}>{patient.full_name}</td>
+                      <td>{patient.nic || '—'}</td>
+                      <td>{formatDate(patient.dob)}</td>
+                      <td>{patient.gender_name || '—'}</td>
+                      <td>{patient.district_name || '—'}</td>
+                      <td>
+                        <span style={styles.bloodBadge}>{patient.blood_group_name || '—'}</span>
+                      </td>
+                      <td>{patient.address || '—'}</td>
                     </tr>
                   ))
                 )}
@@ -262,13 +272,13 @@ function PatientList() {
         </section>
       )}
 
-      {/* Sliding Side-Panel (Drawer) */}
+      {/* Sliding Side Drawer Panel */}
       {isDrawerOpen && (
         <div 
           style={{
             ...styles.drawerOverlay,
-            backgroundColor: isDrawerVisible ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0)',
-            backdropFilter: isDrawerVisible ? 'blur(8px)' : 'blur(0px)',
+            backgroundColor: isDrawerVisible ? 'rgba(17, 24, 39, 0.4)' : 'rgba(17, 24, 39, 0)',
+            backdropFilter: isDrawerVisible ? 'blur(4px)' : 'blur(0px)',
           }} 
           onClick={closeDrawer}
         >
@@ -283,14 +293,15 @@ function PatientList() {
             <div style={styles.drawerHeader}>
               <div>
                 <h2 style={styles.drawerTitle}>Register New Patient</h2>
-                <p style={styles.drawerSubtitle}>Create a new clinical medical record entry.</p>
+                <p style={styles.drawerSubtitle}>Create a centralized demographic file first.</p>
               </div>
-              <button className="drawer-close-btn" onClick={closeDrawer}>&times;</button>
+              <button className="drawer-close-btn" onClick={closeDrawer}>
+                <CloseIcon />
+              </button>
             </div>
 
-            {/* Form */}
+            {/* Form Container */}
             <form onSubmit={handleFormSubmit} style={styles.formContainer}>
-              {/* Scrollable body */}
               <div className="drawer-scroll" style={styles.drawerBody}>
                 {formSubmitError && <div style={styles.formError}>{formSubmitError}</div>}
                 
@@ -302,7 +313,7 @@ function PatientList() {
                     value={formData.full_name} 
                     onChange={handleInputChange} 
                     required 
-                    placeholder="e.g. John Doe"
+                    placeholder="e.g. Saman Fernando"
                     className="premium-input"
                   />
                 </div>
@@ -315,7 +326,7 @@ function PatientList() {
                       name="nic" 
                       value={formData.nic} 
                       onChange={handleInputChange} 
-                      placeholder="e.g. 199012345678"
+                      placeholder="e.g. 198512345678"
                       className="premium-input"
                     />
                   </div>
@@ -397,7 +408,7 @@ function PatientList() {
                     rows="3" 
                     value={formData.address} 
                     onChange={handleInputChange} 
-                    placeholder="Enter resident address details..."
+                    placeholder="Enter resident address..."
                     className="premium-input"
                     style={{ resize: 'vertical', fontFamily: 'inherit' }}
                   ></textarea>
@@ -413,9 +424,9 @@ function PatientList() {
                   type="submit" 
                   disabled={isSubmitting} 
                   className="premium-btn-primary"
-                  style={{ minWidth: '150px', justifyContent: 'center' }}
+                  style={{ minWidth: '130px', justifyContent: 'center' }}
                 >
-                  {isSubmitting ? 'Registering...' : 'Register Patient'}
+                  {isSubmitting ? 'Registering...' : 'Register'}
                 </button>
               </div>
             </form>
@@ -428,12 +439,11 @@ function PatientList() {
 
 const styles = {
   container: {
-    padding: '40px',
+    padding: '32px 40px',
     fontFamily: 'var(--sans)',
-    color: 'var(--text-h)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '30px',
+    gap: '32px',
   },
   header: {
     display: 'flex',
@@ -446,61 +456,79 @@ const styles = {
     flexDirection: 'column',
   },
   title: {
-    margin: '0 0 5px 0',
-    fontSize: '32px',
+    margin: '0 0 6px 0',
+    fontSize: '28px',
     fontWeight: '700',
+    color: '#111827',
     letterSpacing: '-0.5px',
   },
   subtitle: {
     margin: 0,
-    color: 'var(--text)',
-    fontSize: '16px',
+    color: '#6b7280',
+    fontSize: '14px',
   },
   loading: {
-    padding: '20px',
-    fontSize: '16px',
-    color: 'var(--text)',
+    padding: '24px',
+    fontSize: '14px',
+    color: '#6b7280',
     textAlign: 'left',
   },
   error: {
-    padding: '20px',
-    fontSize: '15px',
+    padding: '16px',
+    fontSize: '14px',
     color: '#ef4444',
-    backgroundColor: 'var(--accent-bg)',
+    backgroundColor: '#fef2f2',
     borderRadius: '8px',
-    border: '1px solid var(--accent-border)',
+    border: '1px solid #fee2e2',
     textAlign: 'left',
-    lineHeight: '1.6',
   },
   tableCard: {
-    backgroundColor: 'var(--card-bg, #ffffff)',
-    border: '1px solid var(--border)',
+    backgroundColor: '#ffffff',
+    border: '1px solid #e5e7eb',
     borderRadius: '12px',
-    padding: '25px',
-    boxShadow: 'var(--shadow)',
+    padding: '28px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03)',
     textAlign: 'left',
   },
   tableWrapper: {
     overflowX: 'auto',
+    borderRadius: '8px',
+    border: '1px solid #f0f0f0',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
   },
+  trHead: {
+    backgroundColor: '#fafafa',
+    borderBottom: '1px solid #f0f0f0',
+  },
   tr: {
-    borderBottom: '1px solid var(--border)',
+    borderBottom: '1px solid #f3f4f6',
+    transition: 'background-color 0.2s',
   },
   th: {
-    padding: '12px 16px',
+    padding: '14px 20px',
     fontWeight: '600',
     textAlign: 'left',
-    color: 'var(--text)',
-    fontSize: '14px',
+    color: '#4b5563',
+    fontSize: '12px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
   },
   td: {
-    padding: '14px 16px',
+    padding: '16px 20px',
     fontSize: '14px',
-    color: 'var(--text-h)',
+    color: '#4b5563',
+  },
+  bloodBadge: {
+    backgroundColor: '#f3f4f6',
+    color: '#374151',
+    padding: '3px 8px',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+    border: '1px solid #e5e7eb',
   },
   drawerOverlay: {
     position: 'fixed',
@@ -517,17 +545,17 @@ const styles = {
     width: '100%',
     maxWidth: '520px',
     height: '100%',
-    backgroundColor: 'var(--card-bg)',
-    borderLeft: '1px solid var(--border)',
-    boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.15)',
+    backgroundColor: '#ffffff',
+    borderLeft: '1px solid #e5e7eb',
+    boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.08)',
     transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     display: 'flex',
     flexDirection: 'column',
     boxSizing: 'border-box',
   },
   drawerHeader: {
-    padding: '24px',
-    borderBottom: '1px solid var(--border)',
+    padding: '24px 30px',
+    borderBottom: '1px solid #f3f4f6',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -535,23 +563,23 @@ const styles = {
   },
   drawerTitle: {
     margin: 0,
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '700',
-    color: 'var(--text-h)',
+    color: '#111827',
   },
   drawerSubtitle: {
     margin: '4px 0 0 0',
     fontSize: '13px',
-    color: 'var(--text)',
+    color: '#6b7280',
   },
   formContainer: {
     display: 'flex',
     flexDirection: 'column',
-    height: 'calc(100% - 93px)', // dynamic height offset for header
+    height: 'calc(100% - 91px)',
     margin: 0,
   },
   drawerBody: {
-    padding: '24px',
+    padding: '30px',
     flexGrow: 1,
     overflowY: 'auto',
     display: 'flex',
@@ -572,23 +600,23 @@ const styles = {
   label: {
     fontSize: '13px',
     fontWeight: '600',
-    color: 'var(--text-h)',
+    color: '#374151',
   },
   drawerFooter: {
-    padding: '20px 24px',
-    borderTop: '1px solid var(--border)',
+    padding: '20px 30px',
+    borderTop: '1px solid #f3f4f6',
     display: 'flex',
     justifyContent: 'flex-end',
     gap: '12px',
-    backgroundColor: 'var(--card-bg)',
+    backgroundColor: '#fafafa',
   },
   formError: {
     color: '#ef4444',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-    borderRadius: '8px',
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fee2e2',
+    borderRadius: '6px',
     padding: '12px',
-    fontSize: '14px',
+    fontSize: '13px',
     lineHeight: '1.4',
   }
 };
