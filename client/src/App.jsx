@@ -4,6 +4,8 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
 import PatientList from './pages/PatientList';
 import CaseManagement from './pages/CaseManagement';
+import UserManagement from './pages/UserManagement';
+import Backups from './pages/Backups';
 import Login from './pages/Login';
 import './App.css';
 
@@ -53,8 +55,10 @@ function App() {
       <main style={styles.mainContent}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/patients" element={<PatientList />} />
-          <Route path="/cases" element={<CaseManagement />} />
+          <Route path="/patients" element={<PatientList user={user} />} />
+          <Route path="/cases" element={<CaseManagement user={user} />} />
+          <Route path="/users" element={user?.role === 'Admin' ? <UserManagement /> : <Dashboard />} />
+          <Route path="/backups" element={user?.role === 'Admin' ? <Backups /> : <Dashboard />} />
         </Routes>
       </main>
     </div>

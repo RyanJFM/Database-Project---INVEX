@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function PatientList() {
+function PatientList({ user }) {
+  const isAuthorized = user?.role === 'Admin' || user?.role === 'Doctor/JMO';
+
+  const handleDeletePatient = (patientId, patientName) => {
+    if (window.confirm(`Are you sure you want to delete patient "${patientName}" and all their associated forensic case records? This action cannot be undone.`)) {
+      axios.delete(`/api/patients/${patientId}`)
+        .then(() => {
+          alert('Patient and all associated case records deleted successfully.');
+          fetchPatients();
+        })
+        .catch((err) => {
+          console.error('Error deleting patient:', err);
+          alert(err.response?.data?.error || err.message || 'Failed to delete patient');
+        });
+    }
+  };
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -208,6 +223,21 @@ function PatientList() {
         .drawer-scroll::-webkit-scrollbar-thumb:hover {
           background: #d1d5db;
         }
+        .premium-btn-delete {
+          border: 1px solid #fca5a5;
+          background-color: #ffffff;
+          color: #ef4444;
+          border-radius: 6px;
+          padding: 6px 12px;
+          font-size: 12.5px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .premium-btn-delete:hover {
+          background-color: #fef2f2;
+          border-color: #ef4444;
+        }
       `}</style>
 
       {/* Header Area */}
@@ -239,6 +269,7 @@ function PatientList() {
                   <th>District</th>
                   <th>Blood Group</th>
                   <th>Address</th>
+                  {isAuthorized && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -263,6 +294,16 @@ function PatientList() {
                         <span style={styles.bloodBadge}>{patient.blood_group_name || '—'}</span>
                       </td>
                       <td>{patient.address || '—'}</td>
+                      {isAuthorized && (
+                        <td>
+                          <button 
+                            className="premium-btn-delete"
+                            onClick={() => handleDeletePatient(patient.patient_id, patient.full_name)}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}

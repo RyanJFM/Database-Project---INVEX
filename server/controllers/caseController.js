@@ -125,3 +125,30 @@ exports.createCase = async (req, res) => {
     res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
+
+// DELETE /api/cases/:id
+exports.deleteCase = async (req, res) => {
+  const { id } = req.params;
+  const caseId = parseInt(id);
+
+  if (isNaN(caseId)) {
+    return res.status(400).json({ error: 'Invalid case ID' });
+  }
+
+  try {
+    // Delete all child associations first to prevent foreign key errors
+    await db.query('DELETE FROM Clinical_Exam WHERE case_id = ?', [caseId]);
+    await db.query('DELETE FROM Postmortem_Exam WHERE case_id = ?', [caseId]);
+    await db.query('DELETE FROM Evidence WHERE case_id = ?', [caseId]);
+    await db.query('DELETE FROM File_Attachment WHERE case_id = ?', [caseId]);
+    await db.query('DELETE FROM Court_Report WHERE case_id = ?', [caseId]);
+    
+    // Now delete the parent case
+    await db.query('DELETE FROM Forensic_Case WHERE case_id = ?', [caseId]);
+
+    res.json({ message: 'Forensic case deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting forensic case:', error);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+};

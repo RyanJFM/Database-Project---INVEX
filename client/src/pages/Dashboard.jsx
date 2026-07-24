@@ -14,15 +14,6 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Backup Plan States
-  const [backupPlan, setBackupPlan] = useState('disabled');
-  const [planSubmitting, setPlanSubmitting] = useState(false);
-  const [planSuccess, setPlanSuccess] = useState(null);
-
-  // Manual Backup States
-  const [backingUp, setBackingUp] = useState(false);
-  const [backupSuccess, setBackupSuccess] = useState(null);
-
   useEffect(() => {
     // Fetch stats
     axios.get('/api/dashboard/stats')
@@ -35,51 +26,7 @@ function Dashboard() {
         setError(err.message || 'Failed to fetch dashboard statistics');
         setLoading(false);
       });
-
-    // Fetch active backup plan
-    axios.get('/api/dashboard/backup-plan')
-      .then((res) => {
-        setBackupPlan(res.data.plan);
-      })
-      .catch((err) => {
-        console.error('Error fetching backup plan:', err);
-      });
   }, []);
-
-  const handleUpdatePlan = (e) => {
-    e.preventDefault();
-    setPlanSubmitting(true);
-    setPlanSuccess(null);
-
-    axios.post('/api/dashboard/backup-plan', { plan: backupPlan })
-      .then((res) => {
-        setPlanSubmitting(false);
-        setPlanSuccess('Backup schedule updated successfully!');
-        setTimeout(() => setPlanSuccess(null), 3000);
-      })
-      .catch((err) => {
-        setPlanSubmitting(false);
-        console.error('Failed to update plan:', err);
-        alert(err.response?.data?.error || 'Failed to update backup plan');
-      });
-  };
-
-  const handleBackupNow = () => {
-    setBackingUp(true);
-    setBackupSuccess(null);
-
-    axios.post('/api/dashboard/backup-now')
-      .then((res) => {
-        setBackingUp(false);
-        setBackupSuccess('Secure database backup created successfully!');
-        setTimeout(() => setBackupSuccess(null), 4000);
-      })
-      .catch((err) => {
-        setBackingUp(false);
-        console.error('Failed to run backup:', err);
-        alert(err.response?.data?.error || 'Manual backup execution failed');
-      });
-  };
 
   // SVG Icons for stats cards
   const PatientsIcon = () => (
@@ -227,70 +174,6 @@ function Dashboard() {
               </div>
             </section>
 
-            {/* System Control Center (Backup Config) */}
-            <section style={styles.maintenanceCard}>
-              <div style={styles.sectionHeader}>
-                <h2 style={styles.sectionTitle}>System Maintenance</h2>
-                <span style={styles.tableSubtitle}>Configure active database backups</span>
-              </div>
-
-              <form onSubmit={handleUpdatePlan} style={styles.maintenanceForm}>
-                <div style={styles.formGroup}>
-                  <label style={styles.maintenanceLabel}>Backup Schedule Frequency</label>
-                  <select 
-                    value={backupPlan} 
-                    onChange={(e) => setBackupPlan(e.target.value)} 
-                    className="premium-input"
-                    disabled={backupPlan === 'windows_scheduler'}
-                    style={{ cursor: backupPlan === 'windows_scheduler' ? 'not-allowed' : 'pointer' }}
-                  >
-                    <option value="disabled">Disabled (Manual Only)</option>
-                    <option value="daily">Daily at Midnight</option>
-                    <option value="twice_daily">Twice Daily (12-hour cycle)</option>
-                    <option value="weekly">Weekly (Sunday Midnight)</option>
-                    {backupPlan === 'windows_scheduler' && (
-                      <option value="windows_scheduler">Managed by Windows OS</option>
-                    )}
-                  </select>
-                </div>
-
-                {backupPlan === 'windows_scheduler' ? (
-                  <p style={styles.infoText}>
-                    Backups are controlled externally via Windows Task Scheduler.
-                  </p>
-                ) : (
-                  <button type="submit" disabled={planSubmitting} className="premium-btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                    {planSubmitting ? 'Updating Scheduler...' : 'Save Plan Settings'}
-                  </button>
-                )}
-                {planSuccess && <div style={styles.successMessage}>{planSuccess}</div>}
-              </form>
-
-              <div style={styles.divider}></div>
-
-              <div style={styles.actionBlock}>
-                <h4 style={styles.maintenanceHeading}>On-Demand Backup</h4>
-                <p style={styles.infoText}>Create an immediate AES-256 encrypted archive snapshot of JMO databases.</p>
-                
-                <button 
-                  type="button" 
-                  onClick={handleBackupNow} 
-                  disabled={backingUp} 
-                  className="premium-btn-secondary"
-                  style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="23 4 23 10 17 10" />
-                    <polyline points="1 20 1 14 7 14" />
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                  </svg>
-                  {backingUp ? 'Archiving Database...' : 'Run Backup Now'}
-                </button>
-
-                {backupSuccess && <div style={styles.successMessage}>{backupSuccess}</div>}
-              </div>
-            </section>
-
           </div>
         </>
       )}
@@ -379,70 +262,8 @@ const styles = {
     padding: '28px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03)',
     textAlign: 'left',
-    flex: 2,
-    minWidth: '450px',
-  },
-  maintenanceCard: {
-    backgroundColor: '#ffffff',
-    border: '1px solid #e5e7eb',
-    borderRadius: '12px',
-    padding: '28px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03)',
-    textAlign: 'left',
     flex: 1,
-    minWidth: '320px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '20px',
-  },
-  maintenanceForm: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-  maintenanceLabel: {
-    fontSize: '13px',
-    fontWeight: '600',
-    color: '#374151',
-  },
-  maintenanceHeading: {
-    fontSize: '13px',
-    fontWeight: '700',
-    color: '#111827',
-    margin: '0 0 6px 0',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  infoText: {
-    fontSize: '12.5px',
-    color: '#6b7280',
-    lineHeight: '1.4',
-    margin: '0 0 12px 0',
-  },
-  successMessage: {
-    padding: '10px 12px',
-    backgroundColor: '#ecfdf5',
-    border: '1px solid #a7f3d0',
-    color: '#047857',
-    borderRadius: '6px',
-    fontSize: '12.5px',
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: '10px',
-  },
-  divider: {
-    height: '1px',
-    backgroundColor: '#f3f4f6',
-    margin: '4px 0',
-  },
-  actionBlock: {
-    display: 'flex',
-    flexDirection: 'column',
+    width: '100%',
   },
   sectionHeader: {
     marginBottom: '20px',
